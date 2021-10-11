@@ -60,3 +60,9 @@ else()
     target_link_libraries(quad_renderer PRIVATE project_options
                           volk glfw project_warnings) #
 endif()
+
+target_include_directories (quad_renderer
+        PUBLIC ${VULKAN_INCLUDE_DIRS}
+        )
+
+#target_link_libraries (quad_renderer glfw)
