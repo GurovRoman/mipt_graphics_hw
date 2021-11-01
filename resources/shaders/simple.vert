@@ -21,8 +21,18 @@ layout (location = 0 ) out VS_OUT
     vec3 wNorm;
     vec3 wTangent;
     vec2 texCoord;
-
+    vec3 color;
 } vOut;
+
+vec3 posterize(vec3 vec, uint layers) {
+    return ceil(vec * layers) / layers;
+}
+
+vec3 color(vec3 pos, vec3 normal) {
+    vec3 poscolor = clamp(sin(pos*30.) / 2.0f + 0.5f + log(pos + 1)/4 , 0.f, 1.f);
+    vec3 normcolor = (cos(normal * 100) + 7.) / 8.;  // [6/8, 1]
+    return posterize(poscolor * normcolor, 3);
+}
 
 out gl_PerVertex { vec4 gl_Position; };
 void main(void)
@@ -34,6 +44,7 @@ void main(void)
     vOut.wNorm    = normalize(mat3(transpose(inverse(params.mModel))) * wNorm.xyz);
     vOut.wTangent = normalize(mat3(transpose(inverse(params.mModel))) * wTang.xyz);
     vOut.texCoord = vTexCoordAndTang.xy;
+    vOut.color = color(vOut.wPos, vOut.wNorm);
 
     gl_Position   = params.mProjView * vec4(vOut.wPos, 1.0);
 }
