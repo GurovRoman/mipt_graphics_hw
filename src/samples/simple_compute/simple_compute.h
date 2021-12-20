@@ -79,7 +79,7 @@ private:
   VkPipeline m_pipeline;
   VkPipelineLayout m_layout;
 
-  VkBuffer m_A, m_B, m_sum;
+  VkBuffer m_array;
  
   void CreateInstance();
   void CreateDevice(uint32_t a_deviceId);

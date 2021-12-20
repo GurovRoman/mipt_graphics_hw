@@ -1,30 +1,36 @@
 #version 430
 
-layout( local_size_x = 32 ) in;
+layout( local_size_x = 256 ) in;
 
 layout( push_constant ) uniform params {
-  uint len;
+    uint size;
+    uint block_size;
+    uint sub_pass;
 } PushConstant;
 
-layout(std430, binding = 0) buffer a 
+layout(std430, binding = 0) buffer a
 {
-    float A[];
+    float array[];
 };
 
-layout(std430, binding = 1) buffer b
-{
-    float B[];
-};
-
-layout(std430, binding = 2) buffer Sum
-{
-    float sum[];
-};
-
-void main() 
+void main()
 {
     uint idx = gl_GlobalInvocationID.x;
-    if (idx < PushConstant.len) {
-        sum[idx] = A[idx] + B[idx];
+    if (idx * 2 < PushConstant.size) {
+        uint block_size_2 = PushConstant.block_size / 2;
+
+        uint blockStart = idx / block_size_2 * block_size_2 * 2;
+        uint blockEnd = blockStart + PushConstant.block_size - 1;
+        uint blockPos = idx % block_size_2;
+
+        uint first_idx = blockStart + blockPos;
+        uint second_idx = PushConstant.sub_pass != 0 ? first_idx + block_size_2 : blockEnd - blockPos;
+
+        float first = array[first_idx];
+        float second = array[second_idx];
+        if (first > second) {
+            array[first_idx] = second;
+            array[second_idx] = first;
+        }
     }
 }
