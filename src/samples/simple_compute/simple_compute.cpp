@@ -106,6 +106,13 @@ void SimpleCompute::SetupSimplePipeline()
 
 void SimpleCompute::BuildCommandBufferSimple(VkCommandBuffer a_cmdBuff, VkPipeline)
 {
+  VkBufferMemoryBarrier array_barrier = {};
+  array_barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+  array_barrier.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT;
+  array_barrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT;
+  array_barrier.buffer = m_array;
+  array_barrier.size = VK_WHOLE_SIZE;
+
   vkResetCommandBuffer(a_cmdBuff, 0);
 
   VkCommandBufferBeginInfo beginInfo = {};
@@ -130,7 +137,7 @@ void SimpleCompute::BuildCommandBufferSimple(VkCommandBuffer a_cmdBuff, VkPipeli
       vkCmdPushConstants(a_cmdBuff, m_layout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(params), &params);
 
       vkCmdDispatch(a_cmdBuff, (m_length - 1) / 256 + 1, 1, 1);
-      vkCmdPipelineBarrier(a_cmdBuff, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 0, nullptr);
+      vkCmdPipelineBarrier(a_cmdBuff, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_DEPENDENCY_BY_REGION_BIT , 0, nullptr, 1, &array_barrier, 0, nullptr);
     }
   VK_CHECK_RESULT(vkEndCommandBuffer(a_cmdBuff));
 }
@@ -231,7 +238,11 @@ void SimpleCompute::Execute()
 
   std::vector<float> values(m_length);
   m_pCopyHelper->ReadBuffer(m_array, 0, values.data(), sizeof(float) * values.size());
-  for (auto v: values) {
-    std::cout << v << ' ';
+  for (int i = 0; i < values.size(); ++i) {
+    std::cout << values[i] << ' ';
+    if (i > 0 && values[i] < values[i-1]) {
+      std::cout << "Error";
+      break;
+    }
   }
 }
